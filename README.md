@@ -9,8 +9,66 @@ Interactive WebAR Experience with Real-Time Hand Tracking, 3D Physics, and Gestu
 [![Vite](https://img.shields.io/badge/Vite-8.3-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Three.js](https://img.shields.io/badge/Three.js-0.186-000000?style=flat-square&logo=three.js&logoColor=white)](https://threejs.org/)
 [![Google MediaPipe](https://img.shields.io/badge/MediaPipe-Tasks%20Vision-0078D4?style=flat-square&logo=google&logoColor=white)](https://ai.google.dev/edge/mediapipe/solutions/vision)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![Architecture: 100% Client-Side](https://img.shields.io/badge/Architecture-100%25%20Client--Side-blueviolet?style=flat-square)](#privacy--security)
+[![Architecture: 100% Client-Side](https://img.shields.io/badge/Architecture-100%25%20Client--Side-blueviolet?style=flat-square)](#-privacy--security)
+
+---
+
+## ⚡ Quick Start
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/BitCrush777/VapeAR.git
+cd VapeAR
+
+# 2. Install dependencies
+npm install
+
+# 3. Start local development server
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser and click **Allow** when prompted for camera access.
+
+---
+
+## 🚀 Feature Summary
+
+- 🖐️ **AI Hand Tracking**: Real-time 21-point 3D hand tracking with adaptive $1€$ velocity smoothing and dual-grip detection (pinch & fist).
+- 👄 **Facial Mesh & Sip Detection**: 468-landmark face tracking that computes dynamic lip separation ratios and proximity alignment.
+- 🏺 **Interactive 3D Hookah**: Custom procedural Three.js model featuring PBR materials, dynamic coal embers, and real-time reflections.
+- ➰ **Dynamic Flexible Hose**: Procedural cubic Bezier tube geometry that dynamically recalculates tangency and drape as your hand moves.
+- 💨 **Realistic Volumetric Vapour**: Multi-tiered particle simulation modeling buoyancy, drag, turbulent curl, and facial contour curling.
+- 🔮 **Signature Smoke Ritual**: Hand steering, pinch particle attraction, open-palm repulsion, and circular swirl ($\ge 270^\circ$) vortex rings.
+- 🎨 **Skins & Lounge Customization**: 5 visual themes (*Royal Gold*, *Obsidian Luxury*, *Cyber Neon*, *Deep Ocean*, *Desert Amber*) and 3 ambient lounge environments.
+- 🎵 **100% Procedural Web Audio**: Real-time synthesized bubbling, hot coal crackles, inhale suction, and chime feedback.
+- 🛡️ **Production-Hardened Client**: On-device processing, automatic camera recovery, error boundaries, and tab visibility throttling.
+
+---
+
+## 🖼️ Screenshots & Preview
+
+<!-- Main AR Experience Placeholder -->
+```
+                   ┌──────────────────────────────────────────────┐
+                   │               VapeAR Live Feed               │
+                   │                                              │
+                   │         [Live Hand]          [Volumetric]    │
+                   │           🤏 Grip               💨 Smoke     │
+                   │              ╲                 ╱             │
+                   │               🏺 3D Model                    │
+                   │            (PBR & Lighting)                  │
+                   │                                              │
+                   │   [AI Face Mesh] ───> [Lip Inhale Sensor]    │
+                   └──────────────────────────────────────────────┘
+```
+
+<!-- Add project screenshot here -->
+<!-- Hand interaction: Add hand grip screenshot here -->
+<!-- Smoke Ritual: Add smoke swirl screenshot here -->
+<!-- Customization: Add skins drawer screenshot here -->
+
+> **Live Demo**: *Live demo coming soon.*  
+> **Demo Video**: *Demo video coming soon.*
 
 ---
 
@@ -20,29 +78,14 @@ Interactive WebAR Experience with Real-Time Hand Tracking, 3D Physics, and Gestu
 
 Users can reach into physical space, grip a virtual 3D wand using natural gestures (fist or pinch), guide the flexible braided hose toward their lips, inhale to activate bubbling water and glowing charcoal embers, and exhale volumetric vapour plumes that billow and scatter across their environment. Once exhaled, users can enter the **Smoke Ritual** to sculpt, attract, push, and swirl the vapour into aerodynamic vortexes and expanding toroidal smoke rings using natural hand gestures.
 
-<!-- Project Preview / Demo Screenshot -->
-```
-                   ┌──────────────────────────────────────────────┐
-                   │       VapeAR — Live Camera WebAR             │
-                   │                                              │
-                   │      [Hand Tracking]        [Volumetric]     │
-                   │           🤏 Grip              💨 Smoke      │
-                   │              ╲                ╱              │
-                   │               🏺 3D Model                   │
-                   │            (PBR & Lighting)                  │
-                   │                                              │
-                   │   [AI Face Mesh] ──> [Sip & Exhale Sensor]   │
-                   └──────────────────────────────────────────────┘
-```
-
-> **Live Demo**: *Live demo coming soon.*
+All vision inference, physics calculations, graphics rendering, and audio synthesis run 100% client-side in the user's browser, ensuring immediate responsiveness and complete camera feed privacy.
 
 ---
 
-## ✨ Features
+## 🌟 Features
 
 ### 🖐️ AI Hand Tracking & Predictive Filtering
-- **Multi-Hand Vision Pipeline**: Dual-hand detection powered by `@mediapipe/tasks-vision` `HandLandmarker` running continuously at 30+ FPS.
+- **Multi-Hand Vision Pipeline**: Dual-hand tracking powered by `@mediapipe/tasks-vision` `HandLandmarker` running continuously at 30+ FPS.
 - **One Euro Velocity Filtering**: Adaptive low-pass $1€$ filtering smooths hand coordinates, eliminating high-frequency tremor while maintaining instant responsiveness during fast grabs.
 - **Dual Grip Recognition**: Supports both delicate index-thumb pinches ($<45\text{px}$) and power fist grasps based on knuckle-to-wrist folding ratios.
 - **Grace Period Recovery**: A 250ms hysteresis grace window prevents accidental object drops when hands temporarily pass out of camera bounds or experience sudden motion blur.
@@ -61,21 +104,18 @@ Users can reach into physical space, grip a virtual 3D wand using natural gestur
 - **Multi-Tiered Particle Emitter**: Generates soft, billowing vapour clouds featuring realistic buoyancy, expansion, drag, dissipation, and turbulent curl noise.
 - **Facial Contour Scattering**: Exhaled smoke billows outward from mouth landmarks, curling naturally around cheekbones and chin contours before dispersing into the room.
 
-### 🔮 Signature Gesture-Controlled Smoke Ritual
-- **Hand Steering**: Move your hand through active smoke clouds to steer and push vapour along your movement vector.
-- **Pinch Attraction**: Pinch your thumb and index fingers together to pull nearby smoke particles into a condensed cluster at your palm.
-- **Open Hand Repulsion**: Extend all fingers in an open palm gesture to project an omnidirectional force field, scattering smoke outward.
-- **Swirl Vortex & Toroidal Smoke Ring**: Execute a circular hand swirling gesture ($\ge 270^\circ$ angular accumulation) to spawn a spinning vortex funnel and emit an expanding toroidal smoke ring.
-
-### 🎨 Visual Themes & Customization
+### 🎨 Visual Themes & Lounge Customization
 - **VapeAR Skins**: 5 premium visual themes:
   - **Royal Gold**: Polished mirror brass stem, clear amber flask, warm golden accents.
   - **Obsidian Luxury**: Matte black ceramic stem, smoked charcoal flask, purple ember glow.
   - **Cyber Neon**: Electric cyan anodized aluminum stem, lime green glass, cybernetic blue lighting.
   - **Deep Ocean**: Cobalt blue satin finish stem, turquoise ocean flask, marine bioluminescence.
   - **Desert Amber**: Hammered antique bronze stem, honeycomb amber flask, copper tray.
-- **3 Lounge Presets**: *Midnight Lounge*, *Royal Lounge*, and *Cyber Lounge*.
-- **Zero-Recreation Mutation**: Modifies Three.js materials in-place with zero scene reloads, persisting selections in `localStorage`.
+- **Environment Presets**:
+  - **Midnight Lounge**: Deep Nero Marquina dark marble, warm lantern light, intimate atmosphere.
+  - **Royal Lounge**: Calacatta gold marble, golden filigree accents, warm ambient glow.
+  - **Cyber Lounge**: Brushed titanium tabletop, neon crystal lantern, futuristic cyan hue.
+- **In-Place Material Mutation**: Modifies Three.js materials in real-time with zero scene reloads, persisting selections in `localStorage`.
 
 ### 🎵 100% Procedural Web Audio Engine
 - **Synthesized Soundscapes**: Pure Web Audio API synthesis with zero external audio assets, zero 404s, and zero network overhead:
@@ -90,6 +130,29 @@ Users can reach into physical space, grip a virtual 3D wand using natural gestur
 - **React Error Boundary**: Catches WebGL and context errors gracefully with one-click reload recovery.
 - **Stream Disconnect Recovery**: Listens to device unplugging and orientation events with auto-reacquisition timeouts.
 - **Background Throttling**: Pauses inference loops when browser tab is hidden to conserve device battery and GPU thermal headroom.
+
+---
+
+## 🔮 Signature Feature: Smoke Ritual
+
+The **Smoke Ritual** is a gesture-controlled interaction that activates following an exhale. The virtual smoke becomes responsive to real-time physical hand gestures:
+
+```
+                      ┌──────────────────────────────────────┐
+                      │            SMOKE RITUAL              │
+                      └──────────────────────────────────────┘
+                                          │
+         ┌─────────────────┬──────────────┴─────┬─────────────────┐
+         ▼                 ▼                    ▼                 ▼
+   Hand Steering    Pinch Attraction     Palm Repulsion     Swirl Vortex
+   Push vapour with   Condense smoke     Disperse smoke     Form expanding
+   hand trajectory    toward palm        with shockwave     toroidal ring
+```
+
+- **Hand Steering**: Moving your hand through active smoke clouds exerts aerodynamic velocity, pushing and guiding the vapour along your hand vector.
+- **Pinch Attraction**: Pinching thumb and index fingers together pulls nearby smoke particles into a dense cluster centered on your palm.
+- **Open Hand Repulsion**: Spreading all fingers wide in an open palm gesture produces an omnidirectional force field, scattering smoke outward.
+- **Swirl Vortex & Toroidal Smoke Ring**: Circling your hand in a continuous motion ($\ge 270^\circ$ angular accumulation) spawns a rotating vortex funnel and emits an expanding toroidal smoke ring accompanied by procedural harmonic chimes.
 
 ---
 
@@ -121,16 +184,16 @@ flowchart TD
 
 ### Step-by-Step Experience Journey
 
-| Step | Action | Gesture | Experience Feedback |
+| Step | Action | Gesture | System Response |
 |:---:|:---|:---|:---|
-| **1** | **Reach & Grab** | Form a fist or pinch near the golden wand | Wand snaps to hand grip, braided hose curves dynamically |
-| **2** | **Bring to Mouth** | Move hand toward face | Alignment target locks onto lips, HUD signals *READY* |
+| **1** | **Reach & Grab** | Close fist or pinch fingers near wand tip | Wand snaps to hand grip, dynamic braided hose bends |
+| **2** | **Bring to Mouth** | Move hand toward lips | Wand locks to mouth normal, HUD signals *READY* |
 | **3** | **Take a Sip** | Open mouth slightly while wand is at lips | Water bubbles vigorously, charcoal embers flare bright red |
-| **4** | **Exhale Vapour** | Move hand away and exhale | Dense volumetric vapour cloud curls around face |
-| **5** | **Smoke Ritual** | Move hand through vapour | Particles steer with hand velocity |
+| **4** | **Exhale Vapour** | Move hand away and exhale | Dense volumetric vapour cloud curls around face contours |
+| **5** | **Smoke Ritual** | Move hand through smoke cloud | Particles steer along hand velocity trajectory |
 | **6** | **Shape & Attract** | Pinch fingers together | Smoke condenses tightly into palm |
-| **7** | **Repel Cloud** | Open palm wide with fingers spread | Pressure shockwave disperses smoke outward |
-| **8** | **Smoke Ring** | Swirl hand in a circle ($\ge 270^\circ$) | Ambient chimes trigger, expanding toroidal smoke ring forms |
+| **7** | **Repel Cloud** | Open palm wide with fingers spread | Force field pushes and disperses smoke outward |
+| **8** | **Smoke Ring** | Swirl hand in a circle ($\ge 270^\circ$) | Ambient chime sounds, expanding toroidal smoke ring forms |
 
 ---
 
@@ -149,7 +212,7 @@ flowchart TD
 └──────────────────┘     └──────────────────────┘     └──────────────────────┘
 ```
 
-1. **Hardware Capture**: Accesses local camera stream via `navigator.mediaDevices.getUserMedia` with fallback resolution constraints ($1280\times 720 \to 640\times 480$).
+1. **Hardware Capture**: Accesses local camera stream via `navigator.mediaDevices.getUserMedia` with fallback resolution negotiation ($1280\times 720 \to 640\times 480$).
 2. **AI Landmark Extraction**: MediaPipe Vision Tasks process raw frames in real-time, yielding 21 3D hand coordinates and 468 facial mesh points.
 3. **Gesture & Mouth Detection**:
    - `GestureDetector`: Evaluates finger distances, flexion angles, and 1€-filtered velocity.
@@ -164,10 +227,10 @@ flowchart TD
 
 The interaction loop is governed by a strictly typed Finite State Machine (`AppState`):
 
-| State | Condition | System Response |
+| State | Condition | Meaning & System Response |
 |:---|:---|:---|
-| `IDLE` | No hand detected in camera frame | Displays initial prompt; camera tracks for user entry |
-| `HAND_DETECTED` | One or both hands detected | Highlights virtual wand; prepares grab trigger |
+| `IDLE` | No hand detected in camera frame | Initial resting state; displays prompt and waits for user entry |
+| `HAND_DETECTED` | One or both hands detected in frame | Visual target highlights wand tip; prepares grab detection |
 | `PIPE_GRABBED` | User performs pinch or fist near wand tip | Wand follows hand with 1€ smoothing; dynamic hose bends |
 | `PIPE_AT_MOUTH` | Wand within lip proximity radius | Locks wand angle to mouth normal; ready for inhale |
 | `SIP_DETECTED` | Mouth opens while wand is at lips | Triggers water bubbling sound, coal illumination |
@@ -178,25 +241,63 @@ The interaction loop is governed by a strictly typed Finite State Machine (`AppS
 
 ## 💻 Technology Stack
 
-| Layer | Technology | Version | Purpose |
-|:---|:---|:---:|:---|
-| **Core Framework** | [React](https://react.dev/) | 19.2 | Declarative component UI and lifecycle management |
-| **Language** | [TypeScript](https://www.typescriptlang.org/) | 6.0 | Strict type safety, interfaces, and state validation |
-| **Build Tooling** | [Vite](https://vitejs.dev/) | 8.3 | Instant HMR development and optimized production bundling |
-| **3D Rendering** | [Three.js](https://threejs.org/) | 0.186 | PBR materials, procedural geometries, dynamic tube curves |
-| **Computer Vision** | [@mediapipe/tasks-vision](https://ai.google.dev/) | 1.0.1 | HandLandmarker and FaceLandmarker AI models |
-| **Audio Engine** | Web Audio API | Standard | 100% procedural synthetic soundscapes |
-| **Linter** | [oxlint](https://oxc.rs/) | 1.81 | Ultra-fast static analysis (0 errors, 0 warnings) |
-| **UI & Icons** | Magic UI + Lucide React | 1.52 | Glassmorphism card surfaces, animated text, icons |
+| Technology | Version | Purpose |
+|:---|:---:|:---|
+| [React](https://react.dev/) | 19.2 | Declarative component UI and application orchestration |
+| [TypeScript](https://www.typescriptlang.org/) | 6.0 | Strict type safety, interfaces, and state validation |
+| [Vite](https://vitejs.dev/) | 8.3 | High-performance dev server and production bundling |
+| [Three.js](https://threejs.org/) | 0.186 | 3D rendering, PBR materials, dynamic tube geometries |
+| [@mediapipe/tasks-vision](https://ai.google.dev/) | 1.0.1 | Client-side HandLandmarker and FaceLandmarker AI models |
+| Canvas 2D | Standard | Volumetric smoke rendering, turbulent curl physics, debug overlays |
+| Web Audio API | Standard | 100% procedural synthetic soundscapes (no audio files) |
+| [oxlint](https://oxc.rs/) | 1.81 | Static analysis and linting (0 errors, 0 warnings) |
+| Magic UI + Lucide React | 1.52 | Glassmorphism surfaces, animated text, accessible icons |
 
 ---
 
 ## 🏛️ Architecture
 
+```mermaid
+graph TD
+    subgraph UI_Layer [UI Layer - React 19 & Magic UI]
+        Header[ExperienceHeader]
+        HUD[ExperienceHUD & Hints]
+        Modal[Customization & About Modals]
+        Dock[ControlDock]
+        ErrorB[ErrorBoundary]
+    end
+
+    subgraph AR_Canvas [AR Canvas & Rendering]
+        WebcamFeed[Webcam Feed]
+        WebGL3D[Three.js 3D Scene & PBR]
+        Canvas2D[Volumetric Particle Engine]
+    end
+
+    subgraph Vision_Services [Computer Vision & AI Services]
+        HT[HandTracker - MediaPipe]
+        FT[FaceTracker - MediaPipe]
+        GD[GestureDetector & 1€ Filter]
+        MD[MouthDetector]
+    end
+
+    subgraph Core_Engines [Core Simulation Engines]
+        FSM[HookahInteraction - State Machine]
+        Ritual[SmokeRitualManager - Vortex & Swirl]
+        Audio[AudioManager - Web Audio Synthesizer]
+    end
+
+    WebcamFeed --> HT & FT
+    HT --> GD --> FSM
+    FT --> MD --> FSM
+    FSM --> WebGL3D & Canvas2D & Audio & HUD
+    Canvas2D <--> Ritual
+    UI_Layer -.-> FSM
+```
+
 ```text
-VapeAR Web Application
+React Application
 │
-├── UI Layer (React 19 + Magic UI)
+├── UI Layer
 │   ├── ExperienceHeader      ── Brand wordmark, status capsule, telemetry toggle
 │   ├── WelcomeScreen         ── Onboarding modal, camera permissions prompt
 │   ├── LoadingExperience     ── Pipeline verification checklist (Camera, 3D, Vision)
@@ -206,7 +307,7 @@ VapeAR Web Application
 │   ├── ControlDock           ── Bottom action dock (Audio, Skins, Reset)
 │   └── ErrorBoundary         ── Crash interception and one-click recovery
 │
-├── AR Canvas & Rendering Engine (ARCanvas.tsx)
+├── AR Canvas & Rendering
 │   ├── WebGL Canvas          ── Three.js PBR scene, shadows, lighting, Bezier hose
 │   ├── 2D Overlay Canvas     ── Volumetric smoke particle system, landmark debuggers
 │   └── Hidden Video Element  ── Direct camera input feed
@@ -241,20 +342,21 @@ Hookah-main/
 │   └── icons.svg               # SVG sprite definitions
 ├── src/
 │   ├── assets/
-│   │   ├── hero.png            # Showcase imagery
-│   │   └── vite.svg            # Bundler assets
+│   │   ├── hero.png            # Project preview asset
+│   │   ├── react.svg           # Framework icon
+│   │   └── vite.svg            # Bundler icon
 │   ├── components/
-│   │   ├── magicui/            # Reusable animated UI elements
+│   │   ├── magicui/            # Reusable animated UI components
 │   │   │   ├── AnimatedGradientText.tsx
 │   │   │   ├── AnimatedGridPattern.tsx
 │   │   │   ├── BlurFade.tsx
 │   │   │   ├── Dock.tsx
 │   │   │   ├── MagicCard.tsx
 │   │   │   └── ShimmerButton.tsx
-│   │   ├── AboutModal.tsx      # Project overview and credits
-│   │   ├── ARCanvas.tsx        # Master AR orchestrator component
-│   │   ├── CameraPermission.tsx# Permission error handling & guidance
-│   │   ├── ControlDock.tsx     # Floating bottom action bar
+│   │   ├── AboutModal.tsx      # Project overview and author credits
+│   │   ├── ARCanvas.tsx        # Master WebAR orchestrator component
+│   │   ├── CameraPermission.tsx# Camera error handling & recovery card
+│   │   ├── ControlDock.tsx     # Bottom floating action dock
 │   │   ├── CustomizationModal.tsx # Skins & environment customizer
 │   │   ├── DebugHUD.tsx        # Legacy telemetry wrapper
 │   │   ├── ErrorBoundary.tsx   # React production error boundary
@@ -295,39 +397,58 @@ Hookah-main/
 
 ---
 
-## 🚀 Getting Started
+## 📋 File Responsibility Table
+
+| File | Primary Responsibility |
+|:---|:---|
+| `ARCanvas.tsx` | Core AR pipeline coordinator synchronizing camera video, WebGL 3D, particle overlay, and interaction states |
+| `App.tsx` | Top-level React container managing modal visibility, theme state, audio toggles, and layout hierarchy |
+| `handTracker.ts` | MediaPipe `HandLandmarker` service providing 21 3D coordinates per hand with GPU/CPU delegate fallbacks |
+| `faceTracker.ts` | MediaPipe `FaceLandmarker` service delivering 468 facial mesh landmarks for lip geometry |
+| `gestureDetector.ts` | Evaluates landmarks to identify pinch closures, fist grasps, open palms, and $1€$-filtered velocities |
+| `mouthDetector.ts` | Analyzes lip distance ratios relative to face scale to detect genuine open-mouth inhalations |
+| `hookahInteraction.ts` | Governs the finite state machine (`AppState`), wand kinematics, grab tolerances, and mouth alignment |
+| `hookah3DScene.ts` | Three.js scene manager implementing PBR materials, contact shadows, procedural Bezier hose, and lounge elements |
+| `vapourParticleSystem.ts` | Multi-tiered 2D canvas particle system computing volumetric billow physics, turbulence, buoyancy, and face curl |
+| `smokeRitualManager.ts` | Signature gesture-driven engine tracking circular hand angular velocity, vortex funnels, and smoke rings |
+| `audioManager.ts` | 100% procedural Web Audio API synthesizer generating bubbling water, hot coal crackles, inhale wind, and chimes |
+| `hookahSkins.ts` | Material configuration presets for 5 visual skins (*Royal Gold*, *Obsidian*, *Cyber*, *Ocean*, *Desert*) and 3 lounges |
+| `smokeRitual.ts` | Physics constants (swirl threshold $\ge 270^\circ$, attraction/repulsion forces, particle decay) |
+| `oneEuroFilter.ts` | Adaptive low-pass $1€$ filtering algorithm balancing high-speed responsiveness with low-jitter precision |
+| `drawHookah.ts` | Canvas 2D fallback rendering routines and landmark visualizers |
+| `ErrorBoundary.tsx` | Production error boundary intercepting rendering/context crashes with reload recovery |
+
+---
+
+## 🛠️ Installation & Setup
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (version `18.0.0` or higher recommended)
-- [npm](https://www.npmjs.com/) (version `9.0.0` or higher)
+- [Node.js](https://nodejs.org/) (`v18.0.0` or higher recommended)
+- [npm](https://www.npmjs.com/) (`v9.0.0` or higher)
 - A working web camera (integrated laptop webcam or external USB webcam)
 - Modern browser with WebGL 2.0 and Web Audio API support
 
 ### Running Locally
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/BitCrush777/VapeAR.git
-   cd VapeAR
-   ```
+```bash
+# 1. Clone the repository
+git clone https://github.com/BitCrush777/VapeAR.git
+cd VapeAR
 
-2. **Install project dependencies**:
-   ```bash
-   npm install
-   ```
+# 2. Install dependencies
+npm install
 
-3. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
+# 3. Start local development server
+npm run dev
+```
 
-4. **Launch in your browser**:
-   Open [http://localhost:5173](http://localhost:5173) in Chrome, Edge, Safari, or Firefox.
-   When prompted, click **Allow** to enable camera access.
+The Vite dev server will launch at:
+```
+http://localhost:5173
+```
+Open this address in your browser and click **Allow** when prompted for camera access.
 
----
-
-## 📦 Production Build
+### Production Build
 
 To build the static production distribution:
 
@@ -335,24 +456,17 @@ To build the static production distribution:
 npm run build
 ```
 
-This compiles TypeScript (`tsc -b`) and bundles assets via Vite into the `dist/` directory:
+This compiles TypeScript (`tsc -b`) and bundles assets via Vite into the `dist/` directory.
 
-```text
-dist/
-├── assets/
-│   ├── index-[hash].css      (~3.0 kB)
-│   └── index-[hash].js       (~1.08 MB — includes Three.js & MediaPipe)
-├── index.html
-└── favicon.svg
-```
-
-To preview the built production app locally:
+To preview the production bundle locally:
 
 ```bash
 npm run preview
 ```
 
-To run lint checks:
+### Linting
+
+To run static analysis using the configured oxlint linter:
 
 ```bash
 npm run lint
@@ -360,59 +474,124 @@ npm run lint
 
 ---
 
-## 🌐 Deployment
+## 📷 Browser & Camera Requirements
 
-Because **VapeAR** is a 100% client-side Single Page Application (SPA), it can be deployed directly to any static web hosting platform.
+- **Camera Hardware**: A working webcam is required for hand and face tracking.
+- **Camera Permissions**: The browser will display a permission prompt upon launching. Camera access must be granted for computer vision to function.
+- **HTTPS Requirement**: Modern browsers (Chrome, Safari, Edge, Firefox) enforce strict security policies:
+  - `http://localhost` is permitted for local development.
+  - **HTTPS is strictly required** for all remote production deployments. Non-HTTPS origins will automatically block the webcam stream.
+- **Browser Compatibility**: Best experienced on Chromium-based browsers (Chrome, Edge, Brave) and Safari 16+. Performance and WebGL capabilities may vary across devices.
 
-> [!IMPORTANT]
-> **HTTPS is strictly required** by all modern browsers (Chrome, Safari, Edge, Firefox) for camera permissions (`navigator.mediaDevices.getUserMedia`). Deployments served over insecure HTTP will be blocked from accessing the webcam.
+---
 
-### Recommended Providers
+## 🌐 MediaPipe Model Dependencies
 
-| Provider | Build Command | Output Directory | Root Directory |
-|:---|:---:|:---:|:---:|
-| **Vercel** | `npm run build` | `dist` | `./` |
-| **Netlify** | `npm run build` | `dist` | `./` |
-| **Cloudflare Pages** | `npm run build` | `dist` | `./` |
-| **GitHub Pages** | `npm run build` | `dist` | `./` |
-| **AWS S3 + CloudFront** | `npm run build` | `dist` | `./` |
+VapeAR loads Google MediaPipe Vision Task models and WebAssembly binaries dynamically at runtime via Google and jsDelivr CDNs:
+- **HandLandmarker Task Model**: Downloaded from `storage.googleapis.com/mediapipe-models`.
+- **WASM Binaries**: Loaded from `cdn.jsdelivr.net/npm/@mediapipe/tasks-vision`.
+
+> [!NOTE]
+> An active internet connection is required during initial application launch to download the Vision Task models and WASM binaries into browser cache. Once cached, subsequent launches load faster.
 
 ---
 
 ## 🔒 Privacy & Security
 
-- **100% On-Device Processing**: All computer vision inference (MediaPipe HandLandmarker & FaceLandmarker) executes strictly in-memory on the client's local GPU/CPU.
-- **Zero Video Transmission**: Camera frames never leave the browser sandbox. No video streams, photos, audio, or landmark telemetry are recorded, uploaded, or transmitted to any remote server.
+- **100% On-Device Processing**: All computer vision inference (MediaPipe HandLandmarker & FaceLandmarker) executes strictly in-memory on your local device.
+- **Zero Video Transmission**: Camera frames never leave your browser sandbox. No video streams, photos, audio recordings, or biometric landmark data are saved, uploaded, or transmitted to any server.
 - **No Third-Party Analytics**: Contains zero external telemetry, cookies, or user tracking scripts.
 
 ---
 
-## ⚡ Performance & Benchmarks
+## ⚡ Performance & Resource Considerations
 
-| Metric | Target | Achieved | Notes |
-|:---|:---:|:---:|:---|
-| **Render Frame Rate** | 60 FPS | **60 FPS** | Hardware-accelerated WebGL with Three.js |
-| **AI Vision Inference** | $\ge 25$ FPS | **30–35 FPS** | On-device MediaPipe WebAssembly / GPU delegate |
-| **Inference Latency** | $< 25$ ms | **10–14 ms** | Measured in real-time telemetry HUD |
-| **Gesture Solver Execution** | $< 1$ ms | **~1.25 µs** | 5,000 frames evaluated in 6.3ms with zero memory garbage |
-| **Memory Allocation** | Zero heap leaks | **Stable** | Reused typed arrays, vectors, and particle pools |
+- **Computationally Intensive**: Real-time computer vision and WebGL 3D rendering are computationally demanding. Devices with dedicated GPUs or hardware WebGL acceleration will achieve higher frame rates.
+- **Frame Rate Dynamics**: On desktop hardware with hardware acceleration, VapeAR targets 60 FPS rendering and 30+ FPS vision inference.
+- **Mobile Hardware Considerations**: Mobile devices may experience reduced frame rates or thermal throttling during extended sessions. VapeAR automatically throttles inference loops when the browser tab is hidden to preserve battery and thermal headroom.
+
+---
+
+## 🚀 Deployment
+
+Because **VapeAR** is a 100% client-side Single Page Application (SPA), it can be deployed to any modern static hosting service with HTTPS support.
+
+### Generic Static Deployment
+- **Framework Preset**: Vite
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Node Version**: `18.x` or `20.x`
+
+### Vercel
+1. Import the repository in Vercel.
+2. Select the **Vite** framework preset.
+3. Build Command: `npm run build`
+4. Output Directory: `dist`
+5. Deploy.
+
+### Netlify
+1. Connect repository to Netlify.
+2. Build command: `npm run build`
+3. Publish directory: `dist`
+4. Deploy site.
+
+### GitHub Pages
+If deploying to GitHub Pages under a repository subpath (e.g. `https://<user>.github.io/<repo>/`), configure the `base` field in `vite.config.ts`:
+```ts
+// vite.config.ts
+export default defineConfig({
+  base: '/VapeAR/', // or './' for relative paths
+  // ...
+});
+```
 
 ---
 
 ## ⚠️ Known Limitations
 
-- **Lighting Sensitivity**: Like all optical computer vision models, landmark detection accuracy degrades in extremely dark environments or heavy backlighting.
-- **Primary Hand Grip**: The interaction model prioritizes the dominant hand closest to the virtual wand; extreme occlusion of the hand by objects may require re-entry into the frame.
-- **Mobile Thermal Throttling**: Extended sessions on older mobile devices may cause browser GPU downclocking; background tab throttling is enabled to mitigate power drain.
+- **Lighting Dependencies**: As with optical computer vision systems, hand and face tracking accuracy depends on adequate, even lighting. Dim environments or harsh backlighting can degrade tracking confidence.
+- **Primary Hand Priority**: The interaction engine tracks the primary hand closest to the virtual wand; severe occlusion may require moving the hand back into clear view.
+- **Network Required for First Load**: Remote MediaPipe models and WASM files require internet connectivity on the first session.
+- **Mobile Thermal Throttling**: Extended continuous sessions on older smartphones may lead to GPU downclocking.
 
 ---
 
 ## 🗺️ Roadmap
 
-- [ ] **Multi-User Virtual Lounge**: Peer-to-peer WebRTC synchronization for shared AR smoke sessions.
-- [ ] **Custom Flavour Scents & Particle Colors**: User-selectable custom colour palettes for vapour clouds.
-- [ ] **Custom 3D GLTF Import**: Drag-and-drop support for custom 3D wand and vessel models.
-- [ ] **WebXR Headset Support**: Native immersive VR/MR mode for Meta Quest 3 and Apple Vision Pro.
+The following ideas represent potential future enhancements (not currently implemented):
+
+- [ ] **Multi-User Synchronized Lounge**: Peer-to-peer WebRTC synchronization for shared virtual smoke sessions.
+- [ ] **Custom Particle Color Palettes**: User-selectable custom colour themes for exhaled vapour clouds.
+- [ ] **Custom 3D Model Import**: Support for importing custom 3D wand and vessel GLTF assets.
+- [ ] **WebXR Headset Mode**: Native immersive spatial mode for Meta Quest and Apple Vision Pro.
+- [ ] **Advanced Environmental Occlusion**: Dynamic real-world depth occlusion using WebXR Depth APIs.
+
+---
+
+## 🤝 Contributing
+
+Contributions, feedback, and bug reports are welcome!
+
+1. **Fork the repository** on GitHub.
+2. **Create a feature branch**:
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. **Install dependencies and make changes**:
+   ```bash
+   npm install
+   npm run dev
+   ```
+4. **Test and verify**:
+   ```bash
+   npm run build
+   npm run lint
+   ```
+5. **Commit your changes**:
+   ```bash
+   git commit -m "feat: add amazing feature"
+   ```
+6. **Push to your branch and open a Pull Request**.
 
 ---
 
@@ -424,6 +603,6 @@ Because **VapeAR** is a 100% client-side Single Page Application (SPA), it can b
 
 ## 📄 License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This repository is distributed under open-source MIT terms for personal, educational, and developer use.
 
 © 2026 Saidarshan.K. All rights reserved.
