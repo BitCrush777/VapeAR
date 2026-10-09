@@ -15,6 +15,26 @@ export class HookahInteractionManager {
   private baseRestPos: Point2D = { x: 260, y: 520 };
   private vapourStartTime: number | null = null;
   private sipCompleted: boolean = false;
+  private isInteractionBlocked: boolean = false;
+
+  setInteractionBlocked(blocked: boolean) {
+    this.isInteractionBlocked = blocked;
+    if (blocked && this.pipeState) {
+      this.pipeState.isHeld = false;
+    }
+  }
+
+  releaseHold() {
+    if (this.pipeState) {
+      this.pipeState.isHeld = false;
+      this.pipeState.targetX = this.baseRestPos.x + 40;
+      this.pipeState.targetY = this.baseRestPos.y - 120;
+    }
+  }
+
+  getIsInteractionBlocked(): boolean {
+    return this.isInteractionBlocked;
+  }
 
   constructor(defaultWidth: number = 1280, defaultHeight: number = 720) {
     this.baseRestPos = {
@@ -76,7 +96,10 @@ export class HookahInteractionManager {
     const currentTime = performance.now();
 
     // 1. Handle Pipe Grab / Release logic with Hand-Scale Adaptivity
-    if (pinchState) {
+    if (this.isInteractionBlocked) {
+      this.pipeState.isHeld = false;
+      this.currentEffectiveGrabRadius = this.grabRadius;
+    } else if (pinchState) {
       const distToPipe = Math.hypot(
         pinchState.pinchCenter.x - this.pipeState.x,
         pinchState.pinchCenter.y - this.pipeState.y

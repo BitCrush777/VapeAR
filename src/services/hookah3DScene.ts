@@ -1,11 +1,15 @@
 import * as THREE from 'three';
-import type { AppState, PipePosition, Point2D } from '../types/hookah';
+import type { AppState, PipePosition, Point2D, ActiveObject } from '../types/hookah';
 import {
   HOOKAH_SKINS,
   ENVIRONMENT_PRESETS,
   DEFAULT_SKIN_ID,
   DEFAULT_ENVIRONMENT_ID
 } from '../config/hookahSkins';
+import { CigarCollectionManager } from './cigarCollection/CigarCollectionManager';
+import { CigarFactory, type BuiltCigar } from './cigarCollection/CigarFactory';
+import { CigarMaterialManager } from './cigarCollection/cigarMaterials';
+import { type CigarVariantId, CIGAR_VARIANTS } from './cigarCollection/cigarVariants';
 
 interface WaterBubble {
   mesh: THREE.Mesh;
@@ -31,6 +35,23 @@ export class Hookah3DScene {
   private hookahGroup: THREE.Group;
   private environmentGroup: THREE.Group;
   private mouthpieceGroup: THREE.Group;
+  private cigarCollectionManager: CigarCollectionManager;
+
+  // Active Object Switcher state (Hookah vs Cigar)
+  private activeObject: ActiveObject = 'hookah';
+
+  // Primary Center-Stage 3D Cigar components
+  private cigarMaterialManager: CigarMaterialManager;
+  private cigarFactory: CigarFactory;
+  private primaryCigarGroup: THREE.Group;
+  private primaryCigar: BuiltCigar;
+  private primaryCigarRestCradle: THREE.Group;
+  private primaryCigarGlowLight: THREE.PointLight;
+  private primaryCigarTargetPos: THREE.Vector3 = new THREE.Vector3();
+  private primaryCigarSmoothedPos: THREE.Vector3 = new THREE.Vector3();
+  private isPrimaryCigarHeld: boolean = false;
+  private readonly primaryCigarRestLocalPos = new THREE.Vector3(0, 0.22, 0);
+  private readonly primaryCigarLength = CIGAR_VARIANTS['maduro'].length;
 
   // Dynamic hose mesh
   private hoseMesh: THREE.Mesh | null = null;
@@ -310,6 +331,82 @@ export class Hookah3DScene {
     // ─── 7. Initialize Custom Presets (Phase 7) ─────────────────────────────
     this.applySkin(this.currentSkinId);
     this.applyEnvironment(this.currentEnvironmentId);
+
+    // ─── 8. Premium Cigar Collection (Independent Scene Integration) ────────
+    this.cigarCollectionManager = new CigarCollectionManager();
+    // Initially hidden in hookah mode so mutual exclusion is strictly respected
+    this.cigarCollectionManager.getRootGroup().visible = false;
+    this.scene.add(this.cigarCollectionManager.getRootGroup());
+
+    // ─── 9. Primary Center-Stage Cigar Assembly ─────────────────────────────
+    this.cigarMaterialManager = new CigarMaterialManager();
+    this.cigarFactory = new CigarFactory(this.cigarMaterialManager);
+
+    this.primaryCigarGroup = new THREE.Group();
+    this.primaryCigarGroup.name = 'PrimaryCigarGroup';
+    this.primaryCigarGroup.visible = false; // Hidden initially in hookah mode
+
+    // Handcrafted Spanish Cedar and Brass Display Cradle on table
+    this.primaryCigarRestCradle = this.buildPrimaryCigarCradle();
+    this.primaryCigarGroup.add(this.primaryCigarRestCradle);
+
+    // Primary 3D Cigar with presentation scale
+    this.primaryCigar = this.cigarFactory.createCigar('maduro', true);
+    this.primaryCigar.group.scale.set(1.85, 1.85, 1.85);
+    this.primaryCigar.group.position.copy(this.primaryCigarRestLocalPos);
+    this.primaryCigar.group.rotation.set(0, 0, Math.PI / 2);
+    this.primaryCigarSmoothedPos.copy(this.primaryCigarRestLocalPos);
+    this.primaryCigarTargetPos.copy(this.primaryCigarRestLocalPos);
+    this.primaryCigarGroup.add(this.primaryCigar.group);
+
+    // Localized foot ember glow light
+    this.primaryCigarGlowLight = new THREE.PointLight(0xff4500, 1.2, 4.0);
+    this.primaryCigarGlowLight.castShadow = true;
+    this.primaryCigarGroup.add(this.primaryCigarGlowLight);
+
+    this.scene.add(this.primaryCigarGroup);
+  }
+
+  private buildPrimaryCigarCradle(): THREE.Group {
+    const cradle = new THREE.Group();
+    cradle.name = 'PrimaryCigarRestCradle';
+
+    // 1. Spanish Cedar Plinth Base
+    const baseGeo = new THREE.BoxGeometry(1.6, 0.08, 0.48);
+    const cedarMat = new THREE.MeshStandardMaterial({
+      color: 0x8d4e2b,
+      roughness: 0.62,
+      metalness: 0.06
+    });
+    const baseMesh = new THREE.Mesh(baseGeo, cedarMat);
+    baseMesh.position.y = 0.04;
+    baseMesh.castShadow = true;
+    baseMesh.receiveShadow = true;
+    cradle.add(baseMesh);
+
+    // 2. Beveled Gold Trim Border
+    const trimGeo = new THREE.BoxGeometry(1.64, 0.02, 0.52);
+    const trimMesh = new THREE.Mesh(trimGeo, this.brassMaterial);
+    trimMesh.position.y = 0.01;
+    cradle.add(trimMesh);
+
+    // 3. Dual Polished Brass U-Notches
+    const notchGeo = new THREE.CylinderGeometry(0.028, 0.028, 0.16, 20);
+    for (const xOff of [-0.46, 0.46]) {
+      const post1 = new THREE.Mesh(notchGeo, this.goldMaterial);
+      post1.position.set(xOff, 0.14, -0.08);
+      post1.rotation.x = Math.PI / 5;
+      post1.castShadow = true;
+      cradle.add(post1);
+
+      const post2 = new THREE.Mesh(notchGeo, this.goldMaterial);
+      post2.position.set(xOff, 0.14, 0.08);
+      post2.rotation.x = -Math.PI / 5;
+      post2.castShadow = true;
+      cradle.add(post2);
+    }
+
+    return cradle;
   }
 
   private createSoftShadowTexture(): THREE.CanvasTexture {
@@ -920,16 +1017,30 @@ export class Hookah3DScene {
         this.hookahScale,
         this.hookahScale * 0.86
       );
+      if (this.cigarCollectionManager) {
+        this.cigarCollectionManager.getRootGroup().scale.set(0.68, 0.68, 0.68);
+        this.cigarCollectionManager.getRootGroup().position.set(1.05, 0.0, 0.42);
+      }
+      if (this.primaryCigarGroup) {
+        this.primaryCigarGroup.scale.set(0.85, 0.85, 0.85);
+      }
     } else {
       this.environmentGroup.scale.set(
         this.hookahScale,
         this.hookahScale,
         this.hookahScale
       );
+      if (this.cigarCollectionManager) {
+        this.cigarCollectionManager.getRootGroup().scale.set(0.85, 0.85, 0.85);
+        this.cigarCollectionManager.getRootGroup().position.set(1.28, 0.0, 0.52);
+      }
+      if (this.primaryCigarGroup) {
+        this.primaryCigarGroup.scale.set(1.0, 1.0, 1.0);
+      }
     }
   }
 
-  private screenToWorld(screenX: number, screenY: number, targetZ = 0): THREE.Vector3 {
+  public screenToWorld(screenX: number, screenY: number, targetZ = 0): THREE.Vector3 {
     const ndcX = (screenX / this.canvasWidth) * 2 - 1;
     const ndcY = -(screenY / this.canvasHeight) * 2 + 1;
     const vec = new THREE.Vector3(ndcX, ndcY, 0.5);
@@ -937,6 +1048,14 @@ export class Hookah3DScene {
     const dir = vec.sub(this.camera.position).normalize();
     const distance = (targetZ - this.camera.position.z) / dir.z;
     return this.camera.position.clone().add(dir.multiplyScalar(distance));
+  }
+
+  public worldToScreen(worldPos: THREE.Vector3): Point2D {
+    const p = worldPos.clone().project(this.camera);
+    return {
+      x: ((p.x + 1) / 2) * this.canvasWidth,
+      y: ((-p.y + 1) / 2) * this.canvasHeight
+    };
   }
 
   update(
@@ -953,81 +1072,125 @@ export class Hookah3DScene {
 
     this.hookahGroup.position.copy(this.smoothedHookahPos);
     this.environmentGroup.position.copy(this.smoothedHookahPos);
+    this.primaryCigarGroup.position.copy(this.smoothedHookahPos);
 
-    // ── 2. Smooth mouthpiece position & angle ───────────────────────────────
-    const targetPipePos = this.screenToWorld(pipePos.x, pipePos.y, 0.5);
-    this.smoothedPipePos.lerp(targetPipePos, pipePos.isHeld ? 0.28 : 0.10);
-    this.mouthpieceGroup.position.copy(this.smoothedPipePos);
-    this.mouthpieceGroup.rotation.z = pipePos.angle || -Math.PI / 4;
+    const isHookahMode = this.activeObject === 'hookah';
+    const isCigarMode = this.activeObject === 'cigar';
 
-    // Subtle tactile highlight on mouthpiece when grabbed
-    const targetHighlight = pipePos.isHeld ? 0.35 : 0.0;
-    this.mouthpieceHighlightMaterial.emissiveIntensity = THREE.MathUtils.lerp(
-      this.mouthpieceHighlightMaterial.emissiveIntensity,
-      targetHighlight,
-      0.15
-    );
+    this.hookahGroup.visible = isHookahMode;
+    this.mouthpieceGroup.visible = isHookahMode;
+    this.primaryCigarGroup.visible = isCigarMode;
 
-    // ── 3. Rebuild flexible braided hose curve ──────────────────────────────
-    const s = this.hookahScale;
-    const hosePort = this.smoothedHookahPos.clone().add(new THREE.Vector3(0.28 * s, 4.12 * s, 0.05 * s));
-    const mouthEnd = this.smoothedPipePos.clone();
-
-    // Cubic Bezier gravity sag curve
-    const segLen = hosePort.distanceTo(mouthEnd);
-    const cp1 = hosePort.clone().add(new THREE.Vector3(0.55 * s, -segLen * 0.35, 0));
-    const cp2 = mouthEnd.clone().add(new THREE.Vector3(-0.35 * s, -segLen * 0.4, 0));
-
-    const curve = new THREE.CubicBezierCurve3(hosePort, cp1, cp2, mouthEnd);
-
-    if (this.hoseMesh) {
-      this.scene.remove(this.hoseMesh);
-      this.hoseMesh.geometry.dispose();
-    }
-
-    const tubeGeo = new THREE.TubeGeometry(curve, 48, 0.056 * s, 12, false);
-    this.hoseMesh = new THREE.Mesh(tubeGeo, this.hoseMaterial);
-    this.hoseMesh.castShadow = true;
-    this.scene.add(this.hoseMesh);
-
-    // ── 4. Dynamic Water Bubbles (Phase 3.4) ─────────────────────────────────
     const isSipping = appState === 'SIP_DETECTED' || appState === 'PIPE_AT_MOUTH';
     const isVapour = appState === 'VAPOUR';
-    const bubbleSpeedMultiplier = appState === 'SIP_DETECTED' ? 2.8 : (appState === 'PIPE_AT_MOUTH' ? 1.6 : 0.35);
 
-    for (let i = 0; i < this.waterBubbles.length; i++) {
-      const b = this.waterBubbles[i];
-      b.y += b.speed * bubbleSpeedMultiplier;
+    // ── 2. Object-Specific Pipeline ─────────────────────────────────────────
+    if (isHookahMode) {
+      // ── 2a. Smooth mouthpiece position & angle ────────────────────────────
+      const targetPipePos = this.screenToWorld(pipePos.x, pipePos.y, 0.5);
+      this.smoothedPipePos.lerp(targetPipePos, pipePos.isHeld ? 0.28 : 0.10);
+      this.mouthpieceGroup.position.copy(this.smoothedPipePos);
+      this.mouthpieceGroup.rotation.z = pipePos.angle || -Math.PI / 4;
 
-      // Slight wobble
-      const wobble = Math.sin(timestampMs * b.wobbleSpeed + b.wobblePhase) * 0.02;
-      b.mesh.position.x = b.baseX + wobble;
-      b.mesh.position.z = b.baseZ + wobble;
-      b.mesh.position.y = b.y;
+      // Subtle tactile highlight on mouthpiece when grabbed
+      const targetHighlight = pipePos.isHeld ? 0.35 : 0.0;
+      this.mouthpieceHighlightMaterial.emissiveIntensity = THREE.MathUtils.lerp(
+        this.mouthpieceHighlightMaterial.emissiveIntensity,
+        targetHighlight,
+        0.15
+      );
 
-      // Bubble reaches water surface at y = 1.18: reset to bottom
-      if (b.y > 1.18) {
-        b.y = 0.22 + Math.random() * 0.12;
-        b.baseX = (Math.random() - 0.5) * 0.65;
-        b.baseZ = (Math.random() - 0.5) * 0.65;
+      // ── 2b. Rebuild flexible braided hose curve ───────────────────────────
+      const s = this.hookahScale;
+      const hosePort = this.smoothedHookahPos.clone().add(new THREE.Vector3(0.28 * s, 4.12 * s, 0.05 * s));
+      const mouthEnd = this.smoothedPipePos.clone();
+
+      const segLen = hosePort.distanceTo(mouthEnd);
+      const cp1 = hosePort.clone().add(new THREE.Vector3(0.55 * s, -segLen * 0.35, 0));
+      const cp2 = mouthEnd.clone().add(new THREE.Vector3(-0.35 * s, -segLen * 0.4, 0));
+
+      const curve = new THREE.CubicBezierCurve3(hosePort, cp1, cp2, mouthEnd);
+
+      if (this.hoseMesh) {
+        this.scene.remove(this.hoseMesh);
+        this.hoseMesh.geometry.dispose();
       }
 
-      // Smooth opacity fade near water surface
-      const opacityFactor = b.y > 0.95 ? Math.max(0, (1.18 - b.y) / 0.23) : 1.0;
-      (b.mesh.material as THREE.MeshPhysicalMaterial).opacity =
-        (isSipping ? 0.75 : 0.35) * opacityFactor;
-    }
+      const tubeGeo = new THREE.TubeGeometry(curve, 48, 0.056 * s, 12, false);
+      this.hoseMesh = new THREE.Mesh(tubeGeo, this.hoseMaterial);
+      this.hoseMesh.castShadow = true;
+      this.scene.add(this.hoseMesh);
 
-    // ── 5. Animate Embers & Localized Lighting (Phase 3.7 & 3.15) ────────────
-    const baseEmissive = isSipping ? (appState === 'SIP_DETECTED' ? 4.6 : 2.8) : (isVapour ? 3.0 : 1.8);
-    const emberPulse = baseEmissive + Math.sin(timestampMs * 0.008) * (isSipping ? 1.1 : 0.35);
-    this.coalMaterial.emissiveIntensity = emberPulse;
+      // ── 2c. Dynamic Water Bubbles (Phase 3.4) ─────────────────────────────
+      const bubbleSpeedMultiplier = appState === 'SIP_DETECTED' ? 2.8 : (appState === 'PIPE_AT_MOUTH' ? 1.6 : 0.35);
 
-    if (this.coalGlowLight) {
-      const lightIntensity = (isSipping ? (appState === 'SIP_DETECTED' ? 5.2 : 3.8) : 2.6) +
-        Math.sin(timestampMs * 0.008) * 0.4;
-      this.coalGlowLight.intensity = lightIntensity;
-      this.coalGlowLight.position.copy(this.smoothedHookahPos).add(new THREE.Vector3(0, 6.5 * s, 0.15 * s));
+      for (let i = 0; i < this.waterBubbles.length; i++) {
+        const b = this.waterBubbles[i];
+        b.y += b.speed * bubbleSpeedMultiplier;
+
+        const wobble = Math.sin(timestampMs * b.wobbleSpeed + b.wobblePhase) * 0.02;
+        b.mesh.position.x = b.baseX + wobble;
+        b.mesh.position.z = b.baseZ + wobble;
+        b.mesh.position.y = b.y;
+
+        if (b.y > 1.18) {
+          b.y = 0.22 + Math.random() * 0.12;
+          b.baseX = (Math.random() - 0.5) * 0.65;
+          b.baseZ = (Math.random() - 0.5) * 0.65;
+        }
+
+        const opacityFactor = b.y > 0.95 ? Math.max(0, (1.18 - b.y) / 0.23) : 1.0;
+        (b.mesh.material as THREE.MeshPhysicalMaterial).opacity =
+          (isSipping ? 0.75 : 0.35) * opacityFactor;
+      }
+
+      // ── 2d. Hookah Charcoal Embers ─────────────────────────────────────────
+      const baseEmissive = isSipping ? (appState === 'SIP_DETECTED' ? 4.6 : 2.8) : (isVapour ? 3.0 : 1.8);
+      const emberPulse = baseEmissive + Math.sin(timestampMs * 0.008) * (isSipping ? 1.1 : 0.35);
+      this.coalMaterial.emissiveIntensity = emberPulse;
+
+      if (this.coalGlowLight) {
+        const lightIntensity = (isSipping ? (appState === 'SIP_DETECTED' ? 5.2 : 3.8) : 2.6) +
+          Math.sin(timestampMs * 0.008) * 0.4;
+        this.coalGlowLight.intensity = lightIntensity;
+        this.coalGlowLight.position.copy(this.smoothedHookahPos).add(new THREE.Vector3(0, 6.5 * s, 0.15 * s));
+      }
+    } else {
+      // In Cigar Mode: Hide hose mesh if present
+      if (this.hoseMesh) {
+        this.scene.remove(this.hoseMesh);
+        this.hoseMesh.geometry.dispose();
+        this.hoseMesh = null;
+      }
+
+      // ── 2e. Primary Cigar Manipulation & Dynamics ──────────────────────────
+      if (this.isPrimaryCigarHeld) {
+        // Convert world target to local space of primaryCigarGroup
+        const localTarget = this.primaryCigarGroup.worldToLocal(this.primaryCigarTargetPos.clone());
+        this.primaryCigarSmoothedPos.lerp(localTarget, 0.25);
+        this.primaryCigar.group.position.copy(this.primaryCigarSmoothedPos);
+        this.primaryCigar.group.rotation.set(0.18, -0.22, Math.PI / 2 + 0.15);
+      } else {
+        // Return smoothly to rest cradle
+        this.primaryCigarSmoothedPos.lerp(this.primaryCigarRestLocalPos, 0.14);
+        this.primaryCigar.group.position.copy(this.primaryCigarSmoothedPos);
+        this.primaryCigar.group.rotation.set(0, 0, Math.PI / 2);
+      }
+
+      // Foot Ember Glow & Dynamic Point Light
+      const cigarEmberIntensity = isSipping
+        ? 3.8 + Math.sin(timestampMs * 0.015) * 0.7
+        : (isVapour ? 2.5 : 1.2 + Math.sin(timestampMs * 0.005) * 0.25);
+      this.primaryCigarGlowLight.intensity = cigarEmberIntensity;
+
+      const halfL = (this.primaryCigarLength * 1.85) / 2;
+      this.primaryCigarGlowLight.position.set(
+        this.primaryCigarSmoothedPos.x + halfL,
+        this.primaryCigarSmoothedPos.y,
+        this.primaryCigarSmoothedPos.z
+      );
+      this.primaryCigar.footEndMaterial.emissive = new THREE.Color(0xff3b00);
+      this.primaryCigar.footEndMaterial.emissiveIntensity = isSipping ? 4.2 : (isVapour ? 2.6 : 1.4);
     }
 
     if (this.lanternLight) {
@@ -1049,7 +1212,12 @@ export class Hookah3DScene {
       this.ambientParticles.geometry.attributes.position.needsUpdate = true;
     }
 
-    // ── 6. Render Frame ─────────────────────────────────────────────────────
+    // ── 3. Update Cigar Collection Animations & Interactions (if visible) ────
+    if (this.cigarCollectionManager && this.cigarCollectionManager.getRootGroup().visible) {
+      this.cigarCollectionManager.update(timestampMs);
+    }
+
+    // ── 4. Render Frame ─────────────────────────────────────────────────────
     this.renderer.render(this.scene, this.camera);
   }
 
@@ -1223,7 +1391,99 @@ export class Hookah3DScene {
     return this.currentEnvironmentId;
   }
 
+  getCigarCollectionManager(): CigarCollectionManager {
+    return this.cigarCollectionManager;
+  }
+
+  // ─── Object Switcher (Hookah vs Cigar) Public API ─────────────────────────
+  setActiveObject(mode: ActiveObject) {
+    if (this.activeObject === mode) return;
+
+    // Release any active grab cleanly when switching modes
+    if (this.isPrimaryCigarHeld) {
+      this.isPrimaryCigarHeld = false;
+      this.primaryCigarSmoothedPos.copy(this.primaryCigarRestLocalPos);
+      this.primaryCigarTargetPos.copy(this.primaryCigarRestLocalPos);
+      this.primaryCigar.group.position.copy(this.primaryCigarRestLocalPos);
+      this.primaryCigar.group.rotation.set(0, 0, Math.PI / 2);
+    }
+
+    this.activeObject = mode;
+    const isHookah = mode === 'hookah';
+    const isCigar = mode === 'cigar';
+
+    this.hookahGroup.visible = isHookah;
+    this.mouthpieceGroup.visible = isHookah;
+    if (this.hoseMesh) {
+      this.hoseMesh.visible = isHookah;
+    }
+
+    this.primaryCigarGroup.visible = isCigar;
+    if (this.cigarCollectionManager) {
+      this.cigarCollectionManager.getRootGroup().visible = isCigar;
+      if (!isCigar) {
+        this.cigarCollectionManager.resetDisplayCigar();
+      }
+    }
+  }
+
+  getActiveObject(): ActiveObject {
+    return this.activeObject;
+  }
+
+  getPrimaryCigarWorldPosition(): THREE.Vector3 {
+    const worldPos = new THREE.Vector3();
+    this.primaryCigar.group.getWorldPosition(worldPos);
+    return worldPos;
+  }
+
+  getPrimaryCigarFootWorldPosition(): THREE.Vector3 {
+    const footLocal = new THREE.Vector3(0, -this.primaryCigarLength / 2, 0);
+    return this.primaryCigar.group.localToWorld(footLocal.clone());
+  }
+
+  getPrimaryCigarHeadWorldPosition(): THREE.Vector3 {
+    const headLocal = new THREE.Vector3(0, this.primaryCigarLength / 2, 0);
+    return this.primaryCigar.group.localToWorld(headLocal.clone());
+  }
+
+  setPrimaryCigarGrabbed(grabbed: boolean) {
+    this.isPrimaryCigarHeld = grabbed;
+  }
+
+  isPrimaryCigarGrabbed(): boolean {
+    return this.isPrimaryCigarHeld;
+  }
+
+  setPrimaryCigarTargetPosition(targetWorldPos: THREE.Vector3) {
+    this.primaryCigarTargetPos.copy(targetWorldPos);
+  }
+
+  resetPrimaryCigar() {
+    this.isPrimaryCigarHeld = false;
+    this.primaryCigarSmoothedPos.copy(this.primaryCigarRestLocalPos);
+    this.primaryCigarTargetPos.copy(this.primaryCigarRestLocalPos);
+    this.primaryCigar.group.position.copy(this.primaryCigarRestLocalPos);
+    this.primaryCigar.group.rotation.set(0, 0, Math.PI / 2);
+  }
+
+  setPrimaryCigarVariant(variantId: CigarVariantId) {
+    this.primaryCigar.updateVariant(variantId);
+  }
+
   destroy() {
+    if (this.cigarCollectionManager) {
+      this.cigarCollectionManager.dispose();
+    }
+
+    if (this.primaryCigar) {
+      this.primaryCigar.dispose();
+    }
+
+    if (this.cigarMaterialManager) {
+      this.cigarMaterialManager.dispose();
+    }
+
     if (this.shadowTexture) {
       this.shadowTexture.dispose();
       this.shadowTexture = null;

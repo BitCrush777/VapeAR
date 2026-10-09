@@ -131,6 +131,16 @@ All vision inference, physics calculations, graphics rendering, and audio synthe
 - **Stream Disconnect Recovery**: Listens to device unplugging and orientation events with auto-reacquisition timeouts.
 - **Background Throttling**: Pauses inference loops when browser tab is hidden to conserve device battery and GPU thermal headroom.
 
+### 🍂 Premium Cigar Collection & Top-Right Object Switcher
+- **Zero-Latency Object Switcher**: A 34px circular icon button in the top-right control cluster allows seamless, instant toggling between the artisanal 3D Hookah and handcrafted 3D Cigar.
+- **Strict Mutual Exclusion**: Guarantees only one primary object occupies the AR display area at any time with zero overlapping artifacts or dual rendering.
+- **Interactive Handcrafted 3D Cigar**:
+  - *Lathe-Engineered Geometry*: Authentic cylindrical barrel with gentle swell, rounded head cap, defined foot, and Spanish cedar / brass rest cradle on the marble lounge table.
+  - *Procedural PBR Tobacco Textures*: 2D canvas-generated Maduro, Connecticut, and Robusto wrapper leaf veins, gold foil band ring, and cut filler tobacco ends.
+  - *Natural Hand Grab Manipulation*: Pick up the cigar with hand pinch gestures, move it in 3D physical space with $1€$-filtered kinematics, and release it to gracefully settle back into its rest cradle notches.
+  - *Puff & Ember Dynamics*: Bringing the cigar to your lips triggers realistic open-mouth puff detection, illuminating a pulsating red-hot ember at the foot end and billowing aromatic smoke plumes from both the lips and cigar tip.
+- **Luxury Humidor & Cigar Cutter**: Interactive wooden humidor box with animated brass hinges, Spanish cedar slots, and an operable dual-blade stainless steel guillotine cutter.
+
 ---
 
 ## 🔮 Signature Feature: Smoke Ritual
@@ -356,11 +366,12 @@ Hookah-main/
 │   │   ├── AboutModal.tsx      # Project overview and author credits
 │   │   ├── ARCanvas.tsx        # Master WebAR orchestrator component
 │   │   ├── CameraPermission.tsx# Camera error handling & recovery card
+│   │   ├── CigarCollectionPanel.tsx # Luxury cigar collection drawer
 │   │   ├── ControlDock.tsx     # Bottom floating action dock
 │   │   ├── CustomizationModal.tsx # Skins & environment customizer
 │   │   ├── DebugHUD.tsx        # Legacy telemetry wrapper
 │   │   ├── ErrorBoundary.tsx   # React production error boundary
-│   │   ├── ExperienceHeader.tsx# Header navigation & dynamic status
+│   │   ├── ExperienceHeader.tsx# Header navigation, status capsule & object switcher
 │   │   ├── ExperienceHUD.tsx   # Floating interactive hints & guide
 │   │   ├── InteractionHint.tsx # Gesture guidance bubble
 │   │   ├── LoadingExperience.tsx # Calibration checklist overlay
@@ -370,23 +381,30 @@ Hookah-main/
 │   │   ├── hookahSkins.ts      # Skin palettes & environment materials
 │   │   └── smokeRitual.ts      # Smoke Ritual physics thresholds
 │   ├── services/
+│   │   ├── cigarCollection/    # Handcrafted 3D cigar, box & cutter factories
+│   │   │   ├── CigarBoxFactory.ts
+│   │   │   ├── CigarCollectionManager.ts
+│   │   │   ├── CigarCutterFactory.ts
+│   │   │   ├── CigarFactory.ts
+│   │   │   ├── cigarMaterials.ts
+│   │   │   └── cigarVariants.ts
 │   │   ├── audioManager.ts     # Synthesized Web Audio engine
 │   │   ├── faceTracker.ts      # Face mesh tracking service
 │   │   ├── gestureDetector.ts  # Hand gesture analysis service
 │   │   ├── handTracker.ts      # Hand landmark tracking service
-│   │   ├── hookah3DScene.ts    # Three.js scene, lighting & 3D model
+│   │   ├── hookah3DScene.ts    # Three.js scene, lighting, hookah & primary cigar
 │   │   ├── hookahInteraction.ts# Finite state machine manager
 │   │   ├── mouthDetector.ts    # Mouth open & proximity sensor
 │   │   ├── smokeRitualManager.ts# Smoke Ritual physics engine
 │   │   ├── vapourParticleSystem.ts # Volumetric smoke simulator
 │   │   └── webcam.ts           # Camera hardware interface
 │   ├── types/
-│   │   └── hookah.ts           # Global TypeScript definitions
+│   │   └── hookah.ts           # Global TypeScript definitions (AppState, ActiveObject)
 │   ├── utils/
 │   │   ├── drawHookah.ts       # 2D Canvas fallback & debug visualizers
 │   │   └── oneEuroFilter.ts    # Low-latency adaptive 1€ filter
 │   ├── App.css                 # Global UI & glassmorphism styling
-│   ├── App.tsx                 # Root application container
+│   ├── App.tsx                 # Root application container & object switcher state
 │   ├── index.css               # Design system baseline styles
 │   └── main.tsx                # Application bootstrap entry
 ├── index.html                  # HTML5 document & SEO/OpenGraph tags
@@ -402,13 +420,17 @@ Hookah-main/
 | File | Primary Responsibility |
 |:---|:---|
 | `ARCanvas.tsx` | Core AR pipeline coordinator synchronizing camera video, WebGL 3D, particle overlay, and interaction states |
-| `App.tsx` | Top-level React container managing modal visibility, theme state, audio toggles, and layout hierarchy |
+| `App.tsx` | Top-level React container managing modal visibility, theme state, audio toggles, and object switcher state |
+| `ExperienceHeader.tsx` | Cinematic header with live status capsule, audio indicator, and top-right Hookah/Cigar object switcher |
+| `CigarCollectionPanel.tsx` | Glassmorphic drawer for inspecting cigar variants, opening the humidor box, and testing the cigar cutter |
+| `CigarCollectionManager.ts` | Orchestrates 3D cigar collection assembly, interactive hand-tracking ownership, and variant textures |
+| `CigarFactory.ts` | Procedural lathe geometry constructor for realistic cigars (head cap cut, body swell, foot bevel, gold band) |
 | `handTracker.ts` | MediaPipe `HandLandmarker` service providing 21 3D coordinates per hand with GPU/CPU delegate fallbacks |
 | `faceTracker.ts` | MediaPipe `FaceLandmarker` service delivering 468 facial mesh landmarks for lip geometry |
 | `gestureDetector.ts` | Evaluates landmarks to identify pinch closures, fist grasps, open palms, and $1€$-filtered velocities |
 | `mouthDetector.ts` | Analyzes lip distance ratios relative to face scale to detect genuine open-mouth inhalations |
 | `hookahInteraction.ts` | Governs the finite state machine (`AppState`), wand kinematics, grab tolerances, and mouth alignment |
-| `hookah3DScene.ts` | Three.js scene manager implementing PBR materials, contact shadows, procedural Bezier hose, and lounge elements |
+| `hookah3DScene.ts` | Three.js scene manager implementing PBR materials, contact shadows, hookah, and primary cigar cradle |
 | `vapourParticleSystem.ts` | Multi-tiered 2D canvas particle system computing volumetric billow physics, turbulence, buoyancy, and face curl |
 | `smokeRitualManager.ts` | Signature gesture-driven engine tracking circular hand angular velocity, vortex funnels, and smoke rings |
 | `audioManager.ts` | 100% procedural Web Audio API synthesizer generating bubbling water, hot coal crackles, inhale wind, and chimes |

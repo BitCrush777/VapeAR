@@ -8,10 +8,11 @@ import { MouthDetector } from '../services/mouthDetector';
 import { HookahInteractionManager } from '../services/hookahInteraction';
 import { VapourParticleSystem } from '../services/vapourParticleSystem';
 import { Hookah3DScene } from '../services/hookah3DScene';
+import { CigarCollectionManager } from '../services/cigarCollection/CigarCollectionManager';
 import { drawHookahBase, drawHoseAndMouthpiece, drawLandmarksDebug } from '../utils/drawHookah';
 import { SmokeRitualManager } from '../services/smokeRitualManager';
 import { SMOKE_RITUAL_CONFIG } from '../config/smokeRitual';
-import type { AppState, MouthState, PinchState, PerformanceMetrics, PipePosition, SmokeRitualTelemetry } from '../types/hookah';
+import type { AppState, MouthState, PinchState, PerformanceMetrics, PipePosition, SmokeRitualTelemetry, ActiveObject } from '../types/hookah';
 import { LoadingExperience } from './LoadingExperience';
 import { CameraPermission } from './CameraPermission';
 import { AnimatedGridPattern } from './magicui/AnimatedGridPattern';
@@ -30,6 +31,7 @@ interface ARCanvasProps {
   isStarted: boolean;
   showLandmarks: boolean;
   isDebugMode?: boolean;
+  activeObject?: ActiveObject;
   currentSkin?: string;
   currentEnvironment?: string;
   onStateChange: (state: AppState) => void;
@@ -42,19 +44,22 @@ interface ARCanvasProps {
   manualSmokeTrigger: boolean;
   onManualSmokeTriggered: () => void;
   resetTrigger?: number;
+  onCigarManagerReady?: (manager: CigarCollectionManager) => void;
 }
 
 export const ARCanvas: React.FC<ARCanvasProps> = ({
   isStarted,
   showLandmarks,
   isDebugMode = false,
+  activeObject = 'hookah',
   currentSkin,
   currentEnvironment,
   onStateChange,
   onMetricsUpdate,
   manualSmokeTrigger,
   onManualSmokeTriggered,
-  resetTrigger
+  resetTrigger,
+  onCigarManagerReady
 }) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const webglCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -81,19 +86,37 @@ export const ARCanvas: React.FC<ARCanvasProps> = ({
   // Sync latest props into refs
   const showLandmarksRef = useRef(showLandmarks);
   const isDebugModeRef = useRef(isDebugMode);
+  const activeObjectRef = useRef<ActiveObject>(activeObject);
   const onMetricsUpdateRef = useRef(onMetricsUpdate);
   const onStateChangeRef = useRef(onStateChange);
   const currentSkinRef = useRef(currentSkin);
   const currentEnvironmentRef = useRef(currentEnvironment);
+  const onCigarManagerReadyRef = useRef(onCigarManagerReady);
 
   useEffect(() => {
     showLandmarksRef.current = showLandmarks;
     isDebugModeRef.current = isDebugMode;
+    activeObjectRef.current = activeObject;
     onMetricsUpdateRef.current = onMetricsUpdate;
     onStateChangeRef.current = onStateChange;
     currentSkinRef.current = currentSkin;
     currentEnvironmentRef.current = currentEnvironment;
-  }, [showLandmarks, isDebugMode, onMetricsUpdate, onStateChange, currentSkin, currentEnvironment]);
+    onCigarManagerReadyRef.current = onCigarManagerReady;
+  }, [showLandmarks, isDebugMode, activeObject, onMetricsUpdate, onStateChange, currentSkin, currentEnvironment, onCigarManagerReady]);
+
+  // Object Switcher: Hookah vs Cigar dynamic switching
+  useEffect(() => {
+    if (hookah3DSceneRef.current && activeObject) {
+      hookah3DSceneRef.current.setActiveObject(activeObject);
+      if (activeObject === 'cigar') {
+        hookahManagerRef.current.releaseHold();
+        hookahManagerRef.current.setInteractionBlocked(true);
+      } else {
+        hookahManagerRef.current.setInteractionBlocked(false);
+        hookah3DSceneRef.current.setPrimaryCigarGrabbed(false);
+      }
+    }
+  }, [activeObject]);
 
   // Phase 7: Dynamic skin & environment preset update without scene restart
   useEffect(() => {
@@ -241,6 +264,7 @@ export const ARCanvas: React.FC<ARCanvasProps> = ({
       let lastTelemetryTime = 0;
       let prevAppState: AppState = 'IDLE';
       let prevIsGrabbing = false;
+      let cigarPuffActive = false;
 
       // Render performance tracking
       let renderFrameCount = 0;
@@ -353,32 +377,147 @@ export const ARCanvas: React.FC<ARCanvasProps> = ({
           const isGrabbingNow = pinchState?.isGrabbing ?? false;
           const isDebug = isDebugModeRef.current;
 
-          // Update Hookah Interaction State Machine
-          let { appState, shouldEmitVapour, vapourEmitterPos } = hookahManagerRef.current.update(
-            pinchState,
-            mouthState,
-            width,
-            height
-          );
+          let appState: AppState = 'IDLE';
+          let shouldEmitVapour = false;
+          let vapourEmitterPos = { x: width / 2, y: height * 0.4 };
 
-          // Phase 8: Smoke Ritual lifecycle orchestration
-          if (appState === 'SMOKE_RITUAL') {
-            if (!smokeRitualManagerRef.current.isActive()) {
-              smokeRitualManagerRef.current.startRitual(timestampMs, vapourEmitterPos);
+          if (activeObjectRef.current === 'cigar') {
+            // Block hookah manipulation in Cigar Mode
+            hookahManagerRef.current.setInteractionBlocked(true);
+
+            if (hookah3DSceneRef.current && pinchState) {
+              const cigarWorldPos = hookah3DSceneRef.current.getPrimaryCigarWorldPosition();
+              const cigarScreenPos = hookah3DSceneRef.current.worldToScreen(cigarWorldPos);
+              const distToCigar = Math.hypot(
+                pinchState.pinchCenter.x - cigarScreenPos.x,
+                pinchState.pinchCenter.y - cigarScreenPos.y
+              );
+
+              const cigarGrabThreshold = 140;
+              const wasCigarHeld = hookah3DSceneRef.current.isPrimaryCigarGrabbed();
+
+              if (pinchState.isGrabbing) {
+                if (wasCigarHeld || distToCigar < cigarGrabThreshold) {
+                  hookah3DSceneRef.current.setPrimaryCigarGrabbed(true);
+                  const targetWorldPos = hookah3DSceneRef.current.screenToWorld(
+                    pinchState.pinchCenter.x,
+                    pinchState.pinchCenter.y,
+                    cigarWorldPos.z
+                  );
+                  hookah3DSceneRef.current.setPrimaryCigarTargetPosition(targetWorldPos);
+                }
+              } else {
+                if (wasCigarHeld) {
+                  hookah3DSceneRef.current.setPrimaryCigarGrabbed(false);
+                }
+              }
+            } else if (hookah3DSceneRef.current?.isPrimaryCigarGrabbed()) {
+              hookah3DSceneRef.current.setPrimaryCigarGrabbed(false);
             }
-            const ritualResult = smokeRitualManagerRef.current.update(
+
+            // Cigar Mode Interaction State Machine (Grabbed -> Mouth -> Puff -> Smoke)
+            const isCigarHeld = hookah3DSceneRef.current?.isPrimaryCigarGrabbed() ?? false;
+            if (isCigarHeld) {
+              if (mouthState && hookah3DSceneRef.current) {
+                const headWorld = hookah3DSceneRef.current.getPrimaryCigarHeadWorldPosition();
+                const headScreen = hookah3DSceneRef.current.worldToScreen(headWorld);
+                const distHeadToMouth = Math.hypot(
+                  headScreen.x - mouthState.center.x,
+                  headScreen.y - mouthState.center.y
+                );
+
+                if (distHeadToMouth < 135) {
+                  if (mouthState.isOpen || mouthState.openRatio > 0.18) {
+                    appState = 'SIP_DETECTED';
+                    cigarPuffActive = true;
+                  } else {
+                    appState = 'PIPE_AT_MOUTH';
+                  }
+                } else if (cigarPuffActive) {
+                  appState = 'VAPOUR';
+                  cigarPuffActive = false;
+                  shouldEmitVapour = true;
+                  vapourEmitterPos = mouthState.center;
+                } else {
+                  appState = 'PIPE_GRABBED';
+                }
+              } else {
+                appState = 'PIPE_GRABBED';
+              }
+            } else {
+              appState = pinchState ? 'HAND_DETECTED' : 'IDLE';
+              cigarPuffActive = false;
+            }
+          } else {
+            // Hookah Mode: Normal interaction state machine & side cigar isolation
+            hookahManagerRef.current.setInteractionBlocked(false);
+
+            // Side Cigar Collection Hand-Tracking Interaction (if collection drawer is active)
+            const cigarManager = hookah3DSceneRef.current?.getCigarCollectionManager();
+            if (cigarManager && cigarManager.getRootGroup().visible && pinchState) {
+              const cigarWorldPos = cigarManager.getDisplayCigarWorldPosition();
+              const cigarScreenPos = hookah3DSceneRef.current!.worldToScreen(cigarWorldPos);
+              const distToCigar = Math.hypot(
+                pinchState.pinchCenter.x - cigarScreenPos.x,
+                pinchState.pinchCenter.y - cigarScreenPos.y
+              );
+
+              const cigarGrabThreshold = 120;
+              const isPipeHeld = hookahManagerRef.current.getPipePosition().isHeld;
+
+              if (pinchState.isGrabbing) {
+                if (cigarManager.hasActiveOwnership() || (distToCigar < cigarGrabThreshold && !isPipeHeld)) {
+                  cigarManager.setGrabbed(true);
+                  hookahManagerRef.current.setInteractionBlocked(true);
+
+                  const targetWorldPos = hookah3DSceneRef.current!.screenToWorld(
+                    pinchState.pinchCenter.x,
+                    pinchState.pinchCenter.y,
+                    cigarWorldPos.z
+                  );
+                  cigarManager.setTargetPosition(targetWorldPos);
+                }
+              } else {
+                if (cigarManager.hasActiveOwnership()) {
+                  cigarManager.setGrabbed(false);
+                  hookahManagerRef.current.setInteractionBlocked(false);
+                }
+              }
+            } else if (cigarManager?.hasActiveOwnership()) {
+              cigarManager.setGrabbed(false);
+              hookahManagerRef.current.setInteractionBlocked(false);
+            }
+
+            // Update Hookah Interaction State Machine
+            const hookahRes = hookahManagerRef.current.update(
               pinchState,
-              particleSystemRef.current,
-              timestampMs,
+              mouthState,
               width,
               height
             );
-            if (!ritualResult.isStillActive) {
-              hookahManagerRef.current.completeRitual(pinchState);
-              appState = hookahManagerRef.current.getAppState();
+            appState = hookahRes.appState;
+            shouldEmitVapour = hookahRes.shouldEmitVapour;
+            vapourEmitterPos = hookahRes.vapourEmitterPos;
+
+            // Phase 8: Smoke Ritual lifecycle orchestration
+            if (appState === 'SMOKE_RITUAL') {
+              if (!smokeRitualManagerRef.current.isActive()) {
+                smokeRitualManagerRef.current.startRitual(timestampMs, vapourEmitterPos);
+              }
+              const ritualResult = smokeRitualManagerRef.current.update(
+                pinchState,
+                particleSystemRef.current,
+                timestampMs,
+                width,
+                height
+              );
+              if (!ritualResult.isStillActive) {
+                hookahManagerRef.current.completeRitual(pinchState);
+                appState = hookahManagerRef.current.getAppState();
+              }
+            } else if (smokeRitualManagerRef.current.isActive()) {
+              smokeRitualManagerRef.current.endRitual();
             }
-          } else if (smokeRitualManagerRef.current.isActive()) {
-            smokeRitualManagerRef.current.endRitual();
           }
 
           const pipePos = hookahManagerRef.current.getPipePosition();
@@ -386,9 +525,15 @@ export const ARCanvas: React.FC<ARCanvasProps> = ({
 
           // Spatial Success Feedback Triggers (Phase 5.15 & Phase 8)
           if (!prevIsGrabbing && isGrabbingNow && pinchState) {
-            const dist = Math.hypot(pinchState.pinchCenter.x - pipePos.x, pinchState.pinchCenter.y - pipePos.y);
-            if (dist <= effectiveGrabRadius + 20) {
-              triggerRipple(pipePos.x, pipePos.y, '#e91e63', 52, 380);
+            if (activeObjectRef.current === 'cigar' && hookah3DSceneRef.current?.isPrimaryCigarGrabbed()) {
+              const cigarWorld = hookah3DSceneRef.current.getPrimaryCigarWorldPosition();
+              const cigarScreen = hookah3DSceneRef.current.worldToScreen(cigarWorld);
+              triggerRipple(cigarScreen.x, cigarScreen.y, '#ffd700', 52, 380);
+            } else {
+              const dist = Math.hypot(pinchState.pinchCenter.x - pipePos.x, pinchState.pinchCenter.y - pipePos.y);
+              if (dist <= effectiveGrabRadius + 20) {
+                triggerRipple(pipePos.x, pipePos.y, '#e91e63', 52, 380);
+              }
             }
           }
           if (prevAppState !== 'PIPE_AT_MOUTH' && appState === 'PIPE_AT_MOUTH' && mouthState) {
@@ -434,12 +579,21 @@ export const ARCanvas: React.FC<ARCanvasProps> = ({
           }
 
           // Update spatial audio state machine (Phase 6 & 8)
-          AudioManager.getInstance().updateState(appState, pipePos.isHeld);
+          const isHeldForAudio = activeObjectRef.current === 'cigar'
+            ? (hookah3DSceneRef.current?.isPrimaryCigarGrabbed() ?? false)
+            : pipePos.isHeld;
+          AudioManager.getInstance().updateState(appState, isHeldForAudio);
 
           // Emit Vapour if active
           if (shouldEmitVapour) {
             const faceW = mouthState ? mouthState.width * 3.5 : 160;
             particleSystemRef.current.emit(vapourEmitterPos.x, vapourEmitterPos.y, 14, faceW);
+
+            if (activeObjectRef.current === 'cigar' && hookah3DSceneRef.current) {
+              const footWorld = hookah3DSceneRef.current.getPrimaryCigarFootWorldPosition();
+              const footScreen = hookah3DSceneRef.current.worldToScreen(footWorld);
+              particleSystemRef.current.emit(footScreen.x, footScreen.y, 6, 45);
+            }
           }
 
           // Update particle physics
@@ -459,8 +613,8 @@ export const ARCanvas: React.FC<ARCanvasProps> = ({
 
               const isSipping = appState === 'SIP_DETECTED' || appState === 'PIPE_AT_MOUTH';
 
-              // Backup Hookah graphic if 3D scene is inactive
-              if (!hookah3DSceneRef.current) {
+              // Backup Hookah graphic if 3D scene is inactive (Hookah mode only)
+              if (!hookah3DSceneRef.current && activeObjectRef.current === 'hookah') {
                 drawHookahBase(ctx, basePos, isSipping, timestampMs);
                 drawHoseAndMouthpiece(ctx, basePos, pipePos, appState);
               }
@@ -469,7 +623,20 @@ export const ARCanvas: React.FC<ARCanvasProps> = ({
               particleSystemRef.current.draw(ctx, currentSkinRef.current);
 
               // Draw Spatial Visual Interaction Target (Phase 5.14)
-              drawTargetingReticle(ctx, pipePos, pinchState, effectiveGrabRadius, timestampMs);
+              if (activeObjectRef.current === 'cigar' && hookah3DSceneRef.current) {
+                const cigarWorld = hookah3DSceneRef.current.getPrimaryCigarWorldPosition();
+                const cigarScreen = hookah3DSceneRef.current.worldToScreen(cigarWorld);
+                const isCigarHeld = hookah3DSceneRef.current.isPrimaryCigarGrabbed();
+                drawTargetingReticle(
+                  ctx,
+                  { x: cigarScreen.x, y: cigarScreen.y, targetX: cigarScreen.x, targetY: cigarScreen.y, angle: 0, isHeld: isCigarHeld },
+                  pinchState,
+                  140,
+                  timestampMs
+                );
+              } else {
+                drawTargetingReticle(ctx, pipePos, pinchState, effectiveGrabRadius, timestampMs);
+              }
 
               // Draw Spatial Success Feedback Ripples (Phase 5.15)
               drawRipples(ctx, timestampMs);
@@ -561,12 +728,16 @@ export const ARCanvas: React.FC<ARCanvasProps> = ({
           webglCanvasRef.current.height = window.innerHeight;
           try {
             hookah3DSceneRef.current = new Hookah3DScene(webglCanvasRef.current);
+            if (activeObjectRef.current) {
+              hookah3DSceneRef.current.setActiveObject(activeObjectRef.current);
+            }
             if (currentSkinRef.current) {
               hookah3DSceneRef.current.applySkin(currentSkinRef.current);
             }
             if (currentEnvironmentRef.current) {
               hookah3DSceneRef.current.applyEnvironment(currentEnvironmentRef.current);
             }
+            onCigarManagerReadyRef.current?.(hookah3DSceneRef.current.getCigarCollectionManager());
           } catch (e) {
             console.warn('3D WebGL scene initialization failed, using 2D fallback:', e);
           }
@@ -679,6 +850,10 @@ export const ARCanvas: React.FC<ARCanvasProps> = ({
       particleSystemRef.current.clear();
       activeRipplesRef.current = [];
       AudioManager.getInstance().updateState('IDLE', false);
+      if (hookah3DSceneRef.current) {
+        hookah3DSceneRef.current.resetPrimaryCigar();
+        hookah3DSceneRef.current.getCigarCollectionManager()?.resetDisplayCigar();
+      }
       onStateChange('IDLE');
     }
   }, [resetTrigger, onStateChange]);

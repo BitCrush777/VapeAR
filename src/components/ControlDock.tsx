@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dock, type DockItem } from './magicui/Dock';
-import { Eye, EyeOff, HelpCircle, Info, Palette, RotateCcw, Sliders, Volume2, VolumeX, Wind } from 'lucide-react';
+import { Eye, EyeOff, HelpCircle, Info, Palette, RotateCcw, Sliders, Volume2, VolumeX, Wind, Sparkles } from 'lucide-react';
 
 interface ControlDockProps {
   showLandmarks: boolean;
@@ -16,6 +16,8 @@ interface ControlDockProps {
   onOpenAbout: () => void;
   onOpenCustomize: () => void;
   isCustomizeOpen?: boolean;
+  onOpenCigars?: () => void;
+  isCigarsOpen?: boolean;
 }
 
 export const ControlDock: React.FC<ControlDockProps> = ({
@@ -31,7 +33,9 @@ export const ControlDock: React.FC<ControlDockProps> = ({
   onToggleDebug,
   onOpenAbout,
   onOpenCustomize,
-  isCustomizeOpen = false
+  isCustomizeOpen = false,
+  onOpenCigars,
+  isCigarsOpen = false
 }) => {
   const dockItems: DockItem[] = [
     {
@@ -88,6 +92,14 @@ export const ControlDock: React.FC<ControlDockProps> = ({
       icon: <Palette size={17} />,
       onClick: onOpenCustomize,
       isActive: isCustomizeOpen,
+      activeColor: '#d4af37'
+    },
+    {
+      id: 'cigars',
+      label: 'Cigar Collection',
+      icon: <Sparkles size={17} />,
+      onClick: onOpenCigars ?? (() => {}),
+      isActive: isCigarsOpen,
       activeColor: '#d4af37'
     },
     {

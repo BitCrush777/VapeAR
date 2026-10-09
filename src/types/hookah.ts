@@ -82,3 +82,6 @@ export interface SmokeRitualTelemetry {
   ritualProgress: number; // 0..1
 }
 
+export type ActiveObject = 'hookah' | 'cigar';
+
+

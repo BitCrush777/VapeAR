@@ -7,10 +7,12 @@ import { ControlDock } from './components/ControlDock';
 import { TechnicalHUD } from './components/TechnicalHUD';
 import { AboutModal } from './components/AboutModal';
 import { CustomizationModal } from './components/CustomizationModal';
+import { CigarCollectionPanel } from './components/CigarCollectionPanel';
 import { WelcomeScreen } from './components/WelcomeScreen';
 import { AudioManager } from './services/audioManager';
+import { CigarCollectionManager } from './services/cigarCollection/CigarCollectionManager';
 import { DEFAULT_SKIN_ID, DEFAULT_ENVIRONMENT_ID, HOOKAH_SKINS, ENVIRONMENT_PRESETS } from './config/hookahSkins';
-import type { AppState, MouthState, PinchState, PerformanceMetrics, SmokeRitualTelemetry } from './types/hookah';
+import type { AppState, MouthState, PinchState, PerformanceMetrics, SmokeRitualTelemetry, ActiveObject } from './types/hookah';
 
 export function App() {
   const [isStarted, setIsStarted] = useState<boolean>(false);
@@ -35,6 +37,13 @@ export function App() {
   const [isDebugMode, setIsDebugMode] = useState<boolean>(false);
   const [showAbout, setShowAbout] = useState<boolean>(false);
   const [showCustomize, setShowCustomize] = useState<boolean>(false);
+  const [showCigars, setShowCigars] = useState<boolean>(false);
+  const [cigarManager, setCigarManager] = useState<CigarCollectionManager | null>(null);
+  const [activeObject, setActiveObject] = useState<ActiveObject>('hookah');
+
+  const handleToggleActiveObject = () => {
+    setActiveObject((prev) => (prev === 'hookah' ? 'cigar' : 'hookah'));
+  };
 
   // Phase 7 Customization state with validated localStorage persistence (Phase 9 hardened)
   const [currentSkin, setCurrentSkin] = useState<string>(() => {
@@ -143,6 +152,8 @@ export function App() {
           onToggleDebug={() => setIsDebugMode((prev) => !prev)}
           showGuide={showGuide}
           onToggleGuide={() => setShowGuide((prev) => !prev)}
+          activeObject={activeObject}
+          onToggleActiveObject={handleToggleActiveObject}
         />
       )}
 
@@ -154,6 +165,7 @@ export function App() {
           onCloseGuide={() => setShowGuide(false)}
           isVortexActive={ritualTelemetry?.isVortexActive}
           activeShape={ritualTelemetry?.activeShape}
+          activeObject={activeObject}
         />
       )}
 
@@ -173,6 +185,8 @@ export function App() {
           onOpenAbout={() => setShowAbout(true)}
           onOpenCustomize={() => setShowCustomize(true)}
           isCustomizeOpen={showCustomize}
+          onOpenCigars={() => setShowCigars((prev) => !prev)}
+          isCigarsOpen={showCigars}
         />
       )}
 
@@ -209,11 +223,19 @@ export function App() {
         onResetDefaults={handleResetDefaults}
       />
 
-      {/* 8. Core AR Camera & WebGL Canvas Pipeline */}
+      {/* 8. VapeAR Premium Cigar Collection Panel */}
+      <CigarCollectionPanel
+        isOpen={showCigars}
+        onClose={() => setShowCigars(false)}
+        cigarManager={cigarManager}
+      />
+
+      {/* 9. Core AR Camera & WebGL Canvas Pipeline */}
       <ARCanvas
         isStarted={isStarted}
         showLandmarks={showLandmarks}
         isDebugMode={isDebugMode}
+        activeObject={activeObject}
         currentSkin={currentSkin}
         currentEnvironment={currentEnvironment}
         onStateChange={setAppState}
@@ -221,6 +243,7 @@ export function App() {
         manualSmokeTrigger={manualSmokeTrigger}
         onManualSmokeTriggered={() => setManualSmokeTrigger(false)}
         resetTrigger={resetTrigger}
+        onCigarManagerReady={setCigarManager}
       />
     </div>
   );

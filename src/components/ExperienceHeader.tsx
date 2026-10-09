@@ -1,5 +1,5 @@
 import React from 'react';
-import type { AppState } from '../types/hookah';
+import type { AppState, ActiveObject } from '../types/hookah';
 import { AnimatedGradientText } from './magicui/AnimatedGradientText';
 import { Camera, Sliders, HelpCircle } from 'lucide-react';
 
@@ -9,6 +9,8 @@ interface ExperienceHeaderProps {
   onToggleDebug: () => void;
   showGuide: boolean;
   onToggleGuide: () => void;
+  activeObject?: ActiveObject;
+  onToggleActiveObject?: () => void;
 }
 
 export const ExperienceHeader: React.FC<ExperienceHeaderProps> = ({
@@ -16,22 +18,26 @@ export const ExperienceHeader: React.FC<ExperienceHeaderProps> = ({
   isDebugMode,
   onToggleDebug,
   showGuide,
-  onToggleGuide
+  onToggleGuide,
+  activeObject = 'hookah',
+  onToggleActiveObject
 }) => {
+
   const getSystemStatusMeta = (state: AppState) => {
+    const isCigar = activeObject === 'cigar';
     switch (state) {
       case 'IDLE':
         return { label: 'AR READY', color: 'var(--cyan)', pulse: true };
       case 'HAND_DETECTED':
         return { label: 'HAND DETECTED', color: '#29b6f6', pulse: true };
       case 'PIPE_GRABBED':
-        return { label: 'PIPE GRABBED', color: '#ab47bc', pulse: true };
+        return { label: isCigar ? 'CIGAR HELD' : 'PIPE GRABBED', color: '#ab47bc', pulse: true };
       case 'PIPE_AT_MOUTH':
-        return { label: 'ALIGNED', color: '#ffa726', pulse: true };
+        return { label: isCigar ? 'AT LIPS' : 'ALIGNED', color: '#ffa726', pulse: true };
       case 'SIP_DETECTED':
-        return { label: 'INHALING', color: '#00e676', pulse: true };
+        return { label: isCigar ? 'DRAWING PUFF' : 'INHALING', color: '#00e676', pulse: true };
       case 'VAPOUR':
-        return { label: 'EXHALING', color: '#ff1744', pulse: true };
+        return { label: isCigar ? 'CIGAR SMOKE' : 'EXHALING', color: '#ff1744', pulse: true };
       case 'SMOKE_RITUAL':
         return { label: 'SMOKE RITUAL', color: '#d4af37', pulse: true };
       default:
@@ -193,6 +199,76 @@ export const ExperienceHeader: React.FC<ExperienceHeaderProps> = ({
             </span>
           </div>
         </div>
+
+        {/* Cigar Object Switcher Button (Hookah vs Cigar) */}
+        {onToggleActiveObject && (
+          <button
+            onClick={onToggleActiveObject}
+            title={activeObject === 'cigar' ? 'Switch to Hookah' : 'Switch to Cigar'}
+            aria-label={activeObject === 'cigar' ? 'Switch to Hookah' : 'Switch to Cigar'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 34,
+              height: 34,
+              borderRadius: 17,
+              backgroundColor: activeObject === 'cigar' ? 'rgba(212, 175, 55, 0.28)' : 'rgba(11, 13, 20, 0.74)',
+              border: `1px solid ${activeObject === 'cigar' ? '#d4af37' : 'rgba(255, 255, 255, 0.1)'}`,
+              color: activeObject === 'cigar' ? '#ffd700' : 'rgba(255, 255, 255, 0.75)',
+              boxShadow: activeObject === 'cigar' ? '0 0 12px rgba(212, 175, 55, 0.35)' : 'none',
+              cursor: 'pointer',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+              outline: 'none',
+              padding: 0
+            }}
+          >
+            {/* Recognizable Cigar Silhouette Icon */}
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{
+                transform: 'rotate(-32deg)',
+                transformOrigin: 'center'
+              }}
+            >
+              {/* Cigar Body with rounded head */}
+              <rect
+                x="2.5"
+                y="8"
+                width="19"
+                height="8"
+                rx="4"
+                fill="currentColor"
+                fillOpacity={activeObject === 'cigar' ? '1' : '0.82'}
+              />
+              {/* Decorative Band Ring */}
+              <rect
+                x="7.5"
+                y="7.5"
+                width="3.5"
+                height="9"
+                rx="1"
+                fill={activeObject === 'cigar' ? '#ffe082' : '#d4af37'}
+              />
+              {/* Defined Foot cut line & ember glow */}
+              <line
+                x1="21.5"
+                y1="9.5"
+                x2="21.5"
+                y2="14.5"
+                stroke={activeObject === 'cigar' ? '#ff5722' : 'rgba(255, 255, 255, 0.5)'}
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        )}
 
         {/* Quick Guide Toggle */}
         <button

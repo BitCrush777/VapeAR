@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import type { AppState } from '../types/hookah';
+import type { AppState, ActiveObject } from '../types/hookah';
 import { MagicCard } from './magicui/MagicCard';
 import { BlurFade } from './magicui/BlurFade';
 import { Hand, Sparkles, Wind, HelpCircle, X, ChevronRight } from 'lucide-react';
@@ -10,6 +10,7 @@ export interface ExperienceHUDProps {
   onCloseGuide: () => void;
   isVortexActive?: boolean;
   activeShape?: 'NONE' | 'RING' | 'SPIRAL';
+  activeObject?: ActiveObject;
 }
 
 export const ExperienceHUD: React.FC<ExperienceHUDProps> = ({
@@ -17,7 +18,8 @@ export const ExperienceHUD: React.FC<ExperienceHUDProps> = ({
   showGuide,
   onCloseGuide,
   isVortexActive = false,
-  activeShape = 'NONE'
+  activeShape = 'NONE',
+  activeObject = 'hookah'
 }) => {
   // Auto-reduce/dismiss guide when user actively begins interacting
   useEffect(() => {
@@ -30,6 +32,7 @@ export const ExperienceHUD: React.FC<ExperienceHUDProps> = ({
   }, [appState, showGuide, onCloseGuide]);
 
   const getHintContent = () => {
+    const isCigar = activeObject === 'cigar';
     switch (appState) {
       case 'IDLE':
         return {
@@ -42,35 +45,35 @@ export const ExperienceHUD: React.FC<ExperienceHUDProps> = ({
         return {
           icon: <Hand size={15} color="#29b6f6" />,
           title: 'HAND DETECTED',
-          instruction: 'Reach for the mouthpiece & pinch to grab',
+          instruction: isCigar ? 'Reach for the cigar & pinch to pick up' : 'Reach for the mouthpiece & pinch to grab',
           accentColor: '#29b6f6'
         };
       case 'PIPE_GRABBED':
         return {
           icon: <Sparkles size={15} color="#ab47bc" />,
-          title: 'MOUTHPIECE GRABBED',
-          instruction: 'Bring it toward your lips',
+          title: isCigar ? 'CIGAR GRABBED' : 'MOUTHPIECE GRABBED',
+          instruction: isCigar ? 'Bring cigar toward your lips' : 'Bring it toward your lips',
           accentColor: '#ab47bc'
         };
       case 'PIPE_AT_MOUTH':
         return {
           icon: <Sparkles size={15} color="#ffa726" />,
-          title: 'READY',
-          instruction: 'Open your mouth to inhale',
+          title: isCigar ? 'AT LIPS' : 'READY',
+          instruction: isCigar ? 'Open mouth to draw a puff' : 'Open your mouth to inhale',
           accentColor: '#ffa726'
         };
       case 'SIP_DETECTED':
         return {
           icon: <Wind size={15} color="#00e676" />,
-          title: 'INHALE DETECTED',
-          instruction: 'Water bubbling & charcoal glowing',
+          title: isCigar ? 'PUFF DETECTED' : 'INHALE DETECTED',
+          instruction: isCigar ? 'Ember glowing at cigar foot' : 'Water bubbling & charcoal glowing',
           accentColor: '#00e676'
         };
       case 'VAPOUR':
         return {
           icon: <Wind size={15} color="#ff1744" />,
-          title: 'EXHALE',
-          instruction: 'Let it out — atmospheric vapour active',
+          title: isCigar ? 'CIGAR SMOKE' : 'EXHALE',
+          instruction: isCigar ? 'Rich aromatic cigar smoke drifting' : 'Let it out — atmospheric vapour active',
           accentColor: '#ff1744'
         };
       case 'SMOKE_RITUAL':
