@@ -4,6 +4,8 @@
 
 Interactive WebAR Experience with Real-Time Hand Tracking, 3D Physics, and Gesture-Controlled Smoke.
 
+[![Live Website](https://img.shields.io/badge/Live%20Website-vape--ar--lac.vercel.app-00dfa2?style=for-the-badge&logo=vercel&logoColor=white)](https://vape-ar-lac.vercel.app/)
+
 [![React 19](https://img.shields.io/badge/React-19.2-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8.3-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -27,7 +29,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser and click **Allow** when prompted for camera access.
+Open [http://localhost:5173](http://localhost:5173) in your browser and click **Allow** when prompted for camera access, or explore the live cloud experience directly at [https://vape-ar-lac.vercel.app/](https://vape-ar-lac.vercel.app/).
 
 ---
 
@@ -67,8 +69,8 @@ Open [http://localhost:5173](http://localhost:5173) in your browser and click **
 <!-- Smoke Ritual: Add smoke swirl screenshot here -->
 <!-- Customization: Add skins drawer screenshot here -->
 
-> **Live Demo**: *Live demo coming soon.*  
-> **Demo Video**: *Demo video coming soon.*
+> 🌐 **Live Website**: [https://vape-ar-lac.vercel.app/](https://vape-ar-lac.vercel.app/)  
+> 🎥 **Demo Video**: *Demo video coming soon.*
 
 ---
 
@@ -550,6 +552,8 @@ Because **VapeAR** is a 100% client-side Single Page Application (SPA), it can b
 3. Build Command: `npm run build`
 4. Output Directory: `dist`
 5. Deploy.
+
+🔗 **Live Production Deployment**: [https://vape-ar-lac.vercel.app/](https://vape-ar-lac.vercel.app/)
 
 ### Netlify
 1. Connect repository to Netlify.
